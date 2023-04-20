@@ -1,3 +1,6 @@
+set terminal pngcairo
+set encoding utf8
+
 # グラフの設定
 set title "Comparison of Exact and Numerical Graphs"
 set xlabel "t"
@@ -12,7 +15,6 @@ plot "leapflog.dat" using 1:3 with lines lw 2 lt rgb "blue" title "Exact"
 # Numericalグラフの描画
 replot "leapflog.dat" using 1:4 with lines lw 2 lt rgb "red" title "Numerical"
 
-set term pngcairo
 set output "leapflog.png"
 replot
 set output
