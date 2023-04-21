@@ -5,6 +5,7 @@
 //
 #include <stdio.h>
 #include <math.h>
+#include <boost/timer/progress_display.hpp>
 
 #define NUM_LATTICE   5
 #define NUM_ATOM    (NUM_LATTICE*NUM_LATTICE*NUM_LATTICE)
@@ -13,9 +14,9 @@
 #define SAVE_STEP   10
 
 double DEL_T= 0.001;
-double CELL_X= 10.0;
-double CELL_Y= 10.0;
-double CELL_Z= 10.0;
+double CELL_X= 5.0;
+double CELL_Y= 5.0;
+double CELL_Z= 5.0;
 
 void initial( );            // Function Prototypes
 void force( );
@@ -39,12 +40,14 @@ int main( )
       initplot( );
       fout=fopen("lj.dat","w");
 
+   boost::timer::progress_display show_progress( TOTAL_STEP );
    for (step=0; step<=TOTAL_STEP; step++) {
       force( );
       move( );
       if (step%SAVE_STEP==0) {
          statistics(step);
       }
+      ++show_progress;
    }
 
       finalplot( );
@@ -59,10 +62,34 @@ void initplot( )
 {
    fgnuplot=fopen("lj.plt","w");
 
+   fprintf(fgnuplot,"set encoding utf8\n");
    fprintf(fgnuplot,"set size square\n");
    fprintf(fgnuplot,"set key box font \",24\"\n");
    fprintf(fgnuplot,"set xran [0:%f]\n",CELL_X);
    fprintf(fgnuplot,"set yran [0:%f]\n",CELL_Y);
+   fprintf(fgnuplot,"max_iter = %d\n",TOTAL_STEP/10);
+   fprintf(fgnuplot,"progress_width = 50\n");
+   fprintf(fgnuplot,"set terminal gif animate delay 4 size 900,900\n");
+   fprintf(fgnuplot,"set output \"animation%d.gif\"\n",int(CELL_X));
+   fprintf(fgnuplot,"do for [i=0:max_iter] {\n");
+   fprintf(fgnuplot,"progress_percent = (100*i) / (max_iter-1)\n");
+   fprintf(fgnuplot,"progress_bar = \"[\"\n");
+   fprintf(fgnuplot,"progress_num = int(progress_percent / (100.0 / progress_width))\n");
+   fprintf(fgnuplot,"do for [j=0:progress_width-1] {\n");
+   fprintf(fgnuplot,"    if (j <= progress_num) {\n");
+   fprintf(fgnuplot,"        progress_bar = progress_bar . \"=\"\n");
+   fprintf(fgnuplot,"    } else {\n");
+   fprintf(fgnuplot,"        progress_bar = progress_bar . \" \"\n");
+   fprintf(fgnuplot,"    }\n");
+   fprintf(fgnuplot,"}\n");
+   fprintf(fgnuplot,"progress_bar = progress_bar . \"]\"\n");
+   fprintf(fgnuplot,"file_num = sprintf(\"%%08d\", i*10)\n");
+   fprintf(fgnuplot,"file_name = \"lj\" . file_num . \".dat\"\n");
+   fprintf(fgnuplot,"title_str = file_num\n");
+   fprintf(fgnuplot,"print sprintf(\"Progress: %%s %%5.2f%%%%\", progress_bar, progress_percent)\n");
+   fprintf(fgnuplot,"plot file_name using 1:2 title title_str with points pt 6 ps 5 lw 1\n");
+   fprintf(fgnuplot,"}\n");
+
 }
 //------------------------------------------------
 //   Finalize Gnuplot Command File
@@ -179,8 +206,6 @@ void statistics(int step)
    int i;
    char fname[100];
 
-   printf("%8d %10.5f %10.5f %10.5f\n",
-      step, eng_kin/NUM_ATOM, eng_pot/NUM_ATOM, (eng_kin+eng_pot)/NUM_ATOM);
    fprintf(fout,"%8d %10.5f %10.5f %10.5f\n",
       step, eng_kin/NUM_ATOM, eng_pot/NUM_ATOM, (eng_kin+eng_pot)/NUM_ATOM);
 
@@ -191,9 +216,6 @@ void statistics(int step)
    }
       fclose(fsave);
 
-      fprintf(fgnuplot,"plot \"%s\" using 1:2 t \"%6.6d\" w po pt 6 ps 3 lw 2\n",fname,step);
-
-      fprintf(fgnuplot,"pause 0.01\n");
 
 
 }
