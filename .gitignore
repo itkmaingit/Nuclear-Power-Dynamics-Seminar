@@ -4,3 +4,9 @@ build
 *.png
 *.gif
 a
+*.csv
+*.docx
+*.pdf
+*.xlsx
+*.webp
+*.plt

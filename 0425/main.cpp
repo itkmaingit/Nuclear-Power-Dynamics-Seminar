@@ -7,6 +7,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include <boost/timer/progress_display.hpp>
+#include <fstream>
+#include <iostream>
+
+using std::endl;
+using std::ofstream;
 
 #define NUM_LATTICE 5
 #define NUM_ATOM (NUM_LATTICE * NUM_LATTICE * NUM_LATTICE)
@@ -15,23 +20,24 @@
 #define SAVE_STEP 100
 
 double DEL_T = 0.001;
-double CELL_X = 10.0;
-double CELL_Y = 10.0;
-double CELL_Z = 10.0;
+double CELL_X;
+double CELL_Y;
+double CELL_Z;
+double TemperatureArray[4] = {0.7, 1.0, 1.3, 2.0};
 
-void initial(); // Function Prototypes
+void initial(double temperature); // Function Prototypes
 void force();
 void move();
-void statistics(int);
-void initplot();
+void statistics(int, double);
+void initplot(double temperature);
 void finalplot();
-void scaling();
+void scaling(double temperature);
 
 double posx[NUM_ATOM], posy[NUM_ATOM], posz[NUM_ATOM];
 double momx[NUM_ATOM], momy[NUM_ATOM], momz[NUM_ATOM];
 double frcx[NUM_ATOM], frcy[NUM_ATOM], frcz[NUM_ATOM];
 double eng_kin, eng_pot, virial;
-double t_target, tsum;
+double tsum;
 double psum;
 int ntcount, npcount;
 
@@ -39,37 +45,52 @@ FILE *fgnuplot, *fsave, *fstat;
 
 int main()
 {
-   int step;
-   char dat_fname[100];
-   printf("Input Target Temperature :");
-   scanf("%lf", &t_target);
-   sprintf(dat_fname, "temperature_%lf_size_%lf.dat", t_target, CELL_X);
-
-   fstat = fopen(dat_fname, "w");
-   initial();
-   initplot();
-   boost::timer::progress_display show_progress(TOTAL_STEP);
-
-   for (step = 0; step <= TOTAL_STEP; step++)
+   ofstream ofs("output.csv");
+   ofs << ",";
+   for (int i = 0; i < 4; i++)
    {
-      force();
-      move();
-      if (step % SAVE_STEP == 0)
-         statistics(step);
-      ++show_progress;
+      ofs << TemperatureArray[i] << ",";
    }
+   ofs << endl;
+   for (int j = 0; j < 9; j++)
+   {
+      CELL_X = 30 - 2.5 * j;
+      CELL_Y = CELL_X;
+      CELL_Z = CELL_X;
+      ofs << 1.0 / pow(CELL_X, 3) << ",";
+      for (int i = 0; i < 4; i++)
+      {
+         int step;
 
-   finalplot();
-   printf("\nMean Pressure = %14e\n", psum / npcount);
-   fprintf(fstat, "Mean Pressure = %14e\n", psum / npcount);
-   fclose(fstat);
+         double temperature = TemperatureArray[i];
+
+         initial(temperature);
+         initplot(temperature);
+         printf("Temperature: %lf, Cell size: %lf", temperature, CELL_X);
+         boost::timer::progress_display show_progress(TOTAL_STEP);
+
+         for (step = 0; step <= TOTAL_STEP; step++)
+         {
+            force();
+            move();
+            if (step % SAVE_STEP == 0)
+               statistics(step, temperature);
+            ++show_progress;
+         }
+         printf("\n");
+
+         finalplot();
+         ofs << psum / npcount << ",";
+      }
+      ofs << endl;
+   }
    return 0;
 }
 
 //------------------------------------------------
 //   Initialize Gnuplot Command File
 //
-void initplot()
+void initplot(double temperature)
 {
    fgnuplot = fopen("lj.plt", "w");
 
@@ -81,7 +102,7 @@ void initplot()
    fprintf(fgnuplot, "max_iter = %d\n", TOTAL_STEP / 100);
    fprintf(fgnuplot, "progress_width = 50\n");
    fprintf(fgnuplot, "set terminal gif animate delay 5 size 900,900 optimize\n");
-   fprintf(fgnuplot, "set output \"cell_%lf_temperature_%lf.gif\"\n", CELL_X, t_target);
+   fprintf(fgnuplot, "set output \"cell_%lf_temperature_%lf.gif\"\n", CELL_X, temperature);
    fprintf(fgnuplot, "do for [i=0:max_iter] {\n");
    fprintf(fgnuplot, "progress_percent = (100*i) / (max_iter-1)\n");
    fprintf(fgnuplot, "progress_bar = \"[\"\n");
@@ -112,7 +133,7 @@ void finalplot()
 //------------------------------------------------
 //   Make Simple Cubic Lattice with Random Momenta
 //
-void initial()
+void initial(double temperature)
 {
    int i = 0;
    int ix, iy, iz;
@@ -142,7 +163,7 @@ void initial()
    }
 
    tsum /= 2;
-   scaling();
+   scaling(temperature);
 
    npcount = 0;
    psum = 0.0;
@@ -245,7 +266,7 @@ void move()
 //------------------------------------------------
 //   Output Statistical Data & Configuration
 //
-void statistics(int step)
+void statistics(int step, double temperature)
 {
    // int i;
    double press;
@@ -257,7 +278,7 @@ void statistics(int step)
    //         (eng_kin + eng_pot) / NUM_ATOM, press);
 
    tsum /= ntcount;
-   scaling();
+   scaling(temperature);
 
    if (step > TOTAL_STEP / 2)
    {
@@ -276,12 +297,12 @@ void statistics(int step)
 //------------------------------------------------
 //   Velocity Scaling
 //
-void scaling()
+void scaling(double temperature)
 {
    int i;
    double factor;
 
-   factor = sqrt(t_target * NUM_ATOM / tsum);
+   factor = sqrt(temperature * NUM_ATOM / tsum);
    for (i = 0; i < NUM_ATOM; i++)
    {
       momx[i] *= factor;
