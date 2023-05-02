@@ -1,12 +1,12 @@
 set encoding utf8
 set size square
 set key box font ",24"
-set xran [0:10.000000]
-set yran [0:10.000000]
+set xran [0:5.000000]
+set yran [0:5.000000]
 max_iter = 400
 progress_width = 50
 set terminal gif animate delay 5 size 900,900 optimize
-set output "cell_10.000000_temperature_1.300000.gif"
+set output "cell_5.000000_temperature_1.000000.gif"
 do for [i=0:max_iter] {
 progress_percent = (100*i) / (max_iter-1)
 progress_bar = "["

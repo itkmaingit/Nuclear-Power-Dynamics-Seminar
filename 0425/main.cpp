@@ -15,9 +15,9 @@
 #define SAVE_STEP 100
 
 double DEL_T = 0.001;
-double CELL_X = 10.0;
-double CELL_Y = 10.0;
-double CELL_Z = 10.0;
+double CELL_X = 5.0;
+double CELL_Y = 5.0;
+double CELL_Z = 5.0;
 
 void initial(); // Function Prototypes
 void force();
@@ -247,14 +247,14 @@ void move()
 //
 void statistics(int step)
 {
-   // int i;
+   int i;
    double press;
-   // char fname[100];
+   char fname[100];
 
    press = ((2.0 / 3.0) * eng_kin + (1.0 / 3.0) * virial) / (CELL_X * CELL_Y * CELL_Z);
-   // fprintf(fstat, "%8d %10.5f %10.5f %10.5f %14.5e\n",
-   //         step, eng_kin / NUM_ATOM, eng_pot / NUM_ATOM,
-   //         (eng_kin + eng_pot) / NUM_ATOM, press);
+   fprintf(fstat, "%8d %10.5f %10.5f %10.5f %14.5e\n",
+           step, eng_kin / NUM_ATOM, eng_pot / NUM_ATOM,
+           (eng_kin + eng_pot) / NUM_ATOM, press);
 
    tsum /= ntcount;
    scaling();
@@ -265,13 +265,13 @@ void statistics(int step)
       npcount++;
    }
 
-   // sprintf(fname, "lj%8.8d.dat", step);
-   // fsave = fopen(fname, "w");
-   // for (i = 0; i < NUM_ATOM; i++)
-   // {
-   //    fprintf(fsave, "%8.3f %8.3f %8.3f\n", posx[i], posy[i], posz[i]);
-   // }
-   // fclose(fsave);
+   sprintf(fname, "lj%8.8d.dat", step);
+   fsave = fopen(fname, "w");
+   for (i = 0; i < NUM_ATOM; i++)
+   {
+      fprintf(fsave, "%8.3f %8.3f %8.3f\n", posx[i], posy[i], posz[i]);
+   }
+   fclose(fsave);
 }
 //------------------------------------------------
 //   Velocity Scaling
