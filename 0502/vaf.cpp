@@ -2,6 +2,7 @@
 //
 #include <stdio.h>
 #include <math.h>
+#include <boost/timer/progress_display.hpp>
 
 #define NUM_ATOM 512
 #define TOTAL_STEP 20000
@@ -15,18 +16,33 @@ void getdata(int), vaf(); // Function Prototype
 double momx[NUM_ATOM][NUM_DATA], momy[NUM_ATOM][NUM_DATA], momz[NUM_ATOM][NUM_DATA];
 int ndata;
 
+double CELL_X;
+double CELL_Y;
+double CELL_Z;
+double TemperatureArray[4] = {0.7, 1.0, 1.3, 2.0};
+double CELL_SIZE[2] = {4.0, 8.0};
+
 int main() //===========================================================
 {
-  int step;
-
-  ndata = 0;
-  for (step = TOTAL_STEP / 2; step <= TOTAL_STEP && ndata < NUM_DATA; step += SAVE_STEP)
+  for (int j = 0; j < 2; j++)
   {
-    getdata(step);
-    ndata++;
-  }
-  vaf();
+    CELL_X = CELL_SIZE[j];
+    CELL_Y = CELL_X;
+    CELL_Z = CELL_X;
+    for (int i = 0; i < 4; i++)
+    {
+      t_target = TemperatureArray[i];
+      int step;
 
+      ndata = 0;
+      for (step = TOTAL_STEP / 2; step <= TOTAL_STEP && ndata < NUM_DATA; step += SAVE_STEP)
+      {
+        getdata(step);
+        ndata++;
+      }
+      vaf();
+    }
+  }
   return 0;
 }
 void getdata(int step) //================================================
@@ -81,7 +97,8 @@ void vaf() //====================================================
       }
     }
   }
-  fout = fopen("vaf.dat", "w");
+  sprintf(datfname, "temperature_%lf_cellsize_%lf.dat", t_target, CELL_X);
+  fout = fopen(datfname, "w");
   for (h = 0; h < NUM_HIST; h++)
   {
     fprintf(fout, "%8.3f %10.4f\n", h * DEL_T * SAVE_STEP, vaf[h] / count[h]);

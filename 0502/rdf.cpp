@@ -2,6 +2,7 @@
 //
 #include <stdio.h>
 #include <math.h>
+#include <boost/timer/progress_display.hpp>
 
 #define NUM_ATOM 512
 #define R_MAX 5.0
@@ -16,18 +17,35 @@ double posx[NUM_ATOM], posy[NUM_ATOM], posz[NUM_ATOM];
 double momx[NUM_ATOM], momy[NUM_ATOM], momz[NUM_ATOM];
 int nsum, hist[NUM_HIST];
 double delta_r, cellx, celly, cellz, chx, chy, chz;
-
+double CELL_X;
+double CELL_Y;
+double CELL_Z;
+double t_target;
+double TemperatureArray[4] = {0.7, 1.0, 1.3, 2.0};
+double CELL_SIZE[2] = {4.0, 8.0};
 int main() //=================================
 {
-  int step;
-
-  ini_rdf();
-  for (step = TOTAL_STEP / 2; step <= TOTAL_STEP; step += SAVE_STEP)
+  for (int j = 0; j < 2; j++)
   {
-    getdata(step);
-    calc_rdf();
+    CELL_X = CELL_SIZE[j];
+    CELL_Y = CELL_X;
+    CELL_Z = CELL_X;
+    for (int i = 0; i < 4; i++)
+    {
+      t_target = TemperatureArray[i];
+      int step;
+      printf("Temperature: %lf, Cell size: %lf", t_target, CELL_X);
+      boost::timer::progress_display show_progress(TOTAL_STEP);
+      ini_rdf();
+      for (step = TOTAL_STEP / 2; step <= TOTAL_STEP; step += SAVE_STEP)
+      {
+        getdata(step);
+        calc_rdf();
+        ++show_progress;
+      }
+      out_rdf();
+    }
   }
-  out_rdf();
 
   return 0;
 }
@@ -38,8 +56,7 @@ void getdata(int step) //===============================
   char fname[100];
   FILE *fsave;
 
-  sprintf(fname, "lj%8.8d.dat", step);
-  printf("%s\n", fname);
+  sprintf(fname, "lj%8.8d_temperature_%lf_cellsize_%lf.dat", step, t_target, CELL_X);
   fsave = fopen(fname, "r");
   if (fsave == NULL)
   {
@@ -105,11 +122,13 @@ void calc_rdf() //============== Accumulate Histogram
 }
 void out_rdf() //============== Output RDF
 {
+  char datfname[100];
   int h;
   double density, volume, r, rdf;
   FILE *fout;
+  sprintf(datfname, "temperature_%lf_cellsize_%lf.dat", t_target, CELL_X);
 
-  fout = fopen("rdf.dat", "w");
+  fout = fopen(datfname, "w");
 
   density = NUM_ATOM / (cellx * celly * cellz);
   for (h = 0; h < NUM_HIST; h++)
@@ -117,7 +136,7 @@ void out_rdf() //============== Output RDF
     volume = 4.0 * 3.141592654 / 3.0 * (3 * h * h + 3 * h + 1) * delta_r * delta_r * delta_r;
     rdf = hist[h] / (double)nsum / (0.5 * NUM_ATOM) / (density * volume);
     r = (h + 0.5) * delta_r;
-    fprintf(fout, "%8.4f %8.4f %10d\n", r, rdf, hist[h]);
+    fprintf(fout, "%8.4f %8.4f\n", r, rdf);
   }
   fclose(fout);
 
