@@ -35,7 +35,7 @@ double eng_kin, eng_pot;
 double t_target, tsum;
 int ntcount;
 
-FILE *fgnuplot, *fsave;
+FILE *fsave;
 
 int main()
 {
@@ -51,6 +51,7 @@ int main()
 
       initial();
       // initplot();
+      printf("Temperature: %lf, Cell size: %lf", t_target, CELL_X);
       boost::timer::progress_display show_progress(TOTAL_STEP);
 
       for (step = 0; step <= TOTAL_STEP; step++)
@@ -64,7 +65,7 @@ int main()
         ++show_progress;
       }
 
-      finalplot();
+      // finalplot();
     }
   }
 }
@@ -74,20 +75,20 @@ int main()
 //
 void initplot()
 {
-  fgnuplot = fopen("lj.plt", "w");
+  // fgnuplot = fopen("lj.plt", "w");
 
-  fprintf(fgnuplot, "set size square\n");
-  fprintf(fgnuplot, "set xran [0:%f]\n", CELL_X);
-  fprintf(fgnuplot, "set yran [0:%f]\n", CELL_Y);
-  fprintf(fgnuplot, "set key font \",18\"\n");
+  // fprintf(fgnuplot, "set size square\n");
+  // fprintf(fgnuplot, "set xran [0:%f]\n", CELL_X);
+  // fprintf(fgnuplot, "set yran [0:%f]\n", CELL_Y);
+  // fprintf(fgnuplot, "set key font \",18\"\n");
 }
 //------------------------------------------------
 //   Finalize Gnuplot Command File
 //
-void finalplot()
-{
-  fclose(fgnuplot);
-}
+// void finalplot()
+// {
+//   fclose(fgnuplot);
+// }
 //------------------------------------------------
 //   Make Simple Cubic Lattice with Random Momenta
 //
@@ -227,7 +228,7 @@ void statistics(int step)
   tsum /= ntcount;
   scaling();
 
-  sprintf(fname, "lj%8.8d_temperature_%d_cellsize_%d.dat", step, t_target, CELL_X);
+  sprintf(fname, "lj%8.8d_temperature_%lf_cellsize_%lf.dat", step, t_target, CELL_X);
   fsave = fopen(fname, "w");
   fprintf(fsave, "%f %f %f\n", CELL_X, CELL_Y, CELL_Z);
   for (i = 0; i < NUM_ATOM; i++)
@@ -237,15 +238,15 @@ void statistics(int step)
   }
   fclose(fsave);
 
-  fprintf(fgnuplot, "plot \"%s\" using 1:2 t \"%5.5d\" w po pt 6 ps 2\n", fname, step);
-  if (step == 0)
-  {
-    fprintf(fgnuplot, "pause -1\n");
-  }
-  else
-  {
-    fprintf(fgnuplot, "pause 0.01\n");
-  }
+  // fprintf(fgnuplot, "plot \"%s\" using 1:2 t \"%5.5d\" w po pt 6 ps 2\n", fname, step);
+  // if (step == 0)
+  // {
+  //   fprintf(fgnuplot, "pause -1\n");
+  // }
+  // else
+  // {
+  //   fprintf(fgnuplot, "pause 0.01\n");
+  // }
 }
 //------------------------------------------------
 //   Velocity Scaling
