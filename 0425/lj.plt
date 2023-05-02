@@ -6,7 +6,11 @@ set yran [0:10.000000]
 max_iter = 400
 progress_width = 50
 set terminal gif animate delay 5 size 900,900 optimize
+<<<<<<< HEAD
 set output "cell_10.000000_temperature_2.000000.gif"
+=======
+set output "cell_10.000000_temperature_1.300000.gif"
+>>>>>>> parent of 7ff2111 (completed 0425)
 do for [i=0:max_iter] {
 progress_percent = (100*i) / (max_iter-1)
 progress_bar = "["
